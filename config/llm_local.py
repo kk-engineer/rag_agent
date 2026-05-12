@@ -1,9 +1,10 @@
+import logging
 from openai import OpenAI, APIConnectionError
-from rich.console import Console
 
-console = Console()
-BASE_URL="http://localhost:8000/v1"
-MISTRAL_MODEL="Mistral-Small-3bit-MLX"
+logger = logging.getLogger(__name__)
+
+BASE_URL = "http://localhost:8000/v1"
+MISTRAL_MODEL = "Mistral-Small-3bit-MLX"
 
 
 def empty_stream():
@@ -16,11 +17,8 @@ client = OpenAI(
 )
 
 
-def chat_stream(
-    messages,
-    temperature=0.1
-):
-
+def chat_stream(messages, temperature=0.1):
+    logger.info("Calling local LLM (%s) with %d messages", MISTRAL_MODEL, len(messages))
     try:
         return client.chat.completions.create(
             model=MISTRAL_MODEL,
@@ -28,24 +26,9 @@ def chat_stream(
             temperature=temperature,
             stream=True
         )
-
     except APIConnectionError:
-
-        error_msg = (
-            "LLM server connection failed.\n"
-            "Possible reasons:\n"
-            "1. Local LLM server is not running\n"
-            "2. Wrong base_url/port\n"
-            "3. Model server crashed\n"
-            "4. Network/socket issue"
-        )
-        print(error_msg)
+        logger.error("Local LLM server not running at %s", BASE_URL)
         return empty_stream()
-
     except Exception as e:
-        error_msg = (
-            f"LLM request failed: {str(e)}"
-        )
-        print(error_msg)
-
+        logger.error("Local LLM request failed: %s", e)
         return empty_stream()

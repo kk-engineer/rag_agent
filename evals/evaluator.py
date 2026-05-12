@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class RAGEvaluator:
     def __init__(self, pipeline):
         self.pipeline = pipeline
@@ -7,8 +12,9 @@ class RAGEvaluator:
         ]
 
     def run_suite(self):
-        print("--- Starting Evaluation ---")
+        logger.info("Starting keyword-based evaluation (%d tests)", len(self.test_cases))
         for case in self.test_cases:
             res = self.pipeline.ask(case["query"])
             passed = case["expected_keyword"].lower() in res.lower()
-            print(f"Query: {case['query']} | Passed: {passed}")
+            status = "PASS" if passed else "FAIL"
+            logger.info("[%s] query=%s | expected=%s", status, case["query"], case["expected_keyword"])

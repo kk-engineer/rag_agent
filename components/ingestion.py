@@ -1,22 +1,25 @@
+import logging
 from langchain_community.document_loaders import PyPDFLoader
-import os
+from utils import timer
+
+logger = logging.getLogger(__name__)
+
 
 class DocumentIngestor:
     def __init__(self, file_path):
-        print("Ingestion started")
         self.file_path = file_path
 
+    @timer
     def load_and_clean(self):
-        print("Load and clean document")
+        logger.info("Loading PDF: %s", self.file_path)
         loader = PyPDFLoader(self.file_path)
         docs = loader.load()
         cleaned_docs = []
         for doc in docs:
-            # 1. Strip whitespace
             text = doc.page_content.strip()
-            # 2. Only keep if there's actual text content
             if text:
                 doc.page_content = text
                 cleaned_docs.append(doc)
 
+        logger.info("Loaded %d pages, %d non-empty", len(docs), len(cleaned_docs))
         return cleaned_docs

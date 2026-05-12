@@ -1,13 +1,16 @@
+import logging
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain.retrievers.ensemble import EnsembleRetriever
 from langchain_core.prompts import PromptTemplate
+from utils import timer
+
+logger = logging.getLogger(__name__)
 
 
 class HybridRetriever:
     def __init__(self, vectorstore, bm25_retriever, llm):
         self.llm = llm
 
-        # 1. Custom Prompt to prevent NVIDIA 'Empty String' errors
         QUERY_PROMPT = PromptTemplate(
             input_variables=["question"],
             template="""You are an AI language model assistant. Your task is to generate five 
@@ -17,20 +20,20 @@ class HybridRetriever:
             Original question: {question}""",
         )
 
-        # 2. Multi-Query Retriever
+        logger.info("Setting up multi-query retriever (k=5)")
         self.mq_retriever = MultiQueryRetriever.from_llm(
             retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
             llm=self.llm,
             prompt=QUERY_PROMPT
         )
 
-        # 3. Create the Ensemble (Hybrid) Retriever
-        # We name this 'ensemble' so the orchestrator can find it
+        logger.info("Creating ensemble retriever (dense=0.7, sparse=0.3)")
         self.ensemble = EnsembleRetriever(
             retrievers=[self.mq_retriever, bm25_retriever],
             weights=[0.7, 0.3]
         )
 
+    @timer
     def retrieve(self, query: str):
-        # High-level method to invoke the ensemble
+        logger.info("Retrieving documents for: %s", query[:80])
         return self.ensemble.invoke(query)
