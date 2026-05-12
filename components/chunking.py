@@ -37,7 +37,7 @@ class SemanticProcessor:
         logger.info("Safety pre-split produced %d chunks", len(pre_split_docs))
 
         final_input = [d for d in pre_split_docs if d.page_content.strip()]
-
+        return final_input
         try:
             semantic_docs = self.semantic_splitter.split_documents(final_input)
             logger.info("Semantic split produced %d chunks", len(semantic_docs))

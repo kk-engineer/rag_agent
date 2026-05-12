@@ -80,7 +80,11 @@ if __name__ == "__main__":
     ragas_eval = RagasEvaluator()
     summary_df = ragas_eval.run_evaluation(results)
 
-    logger.info("=" * 50)
-    logger.info("RAGAS Evaluation Scores")
-    logger.info("=" * 50)
-    print(summary_df.to_string())
+    print("\n" + "─" * 52)
+    print("  RAGAS Evaluation Scores")
+    print("─" * 52)
+    for col in summary_df.columns:
+        values = summary_df[col]
+        mean = values.mean()
+        print(f"  {col:<22s}  {mean:.4f}  (per query: {', '.join(f'{v:.4f}' for v in values)})")
+    print("─" * 52)

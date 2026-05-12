@@ -44,5 +44,5 @@ class RagasEvaluator:
         )
 
         df = score.to_pandas()
-        logger.info("Evaluation complete:\n%s", df.to_string())
+        logger.info("RAGAS evaluation complete")
         return df
