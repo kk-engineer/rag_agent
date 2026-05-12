@@ -83,7 +83,7 @@ if __name__ == "__main__":
     print("\n" + "─" * 52)
     print("  RAGAS Evaluation Scores")
     print("─" * 52)
-    for col in summary_df.columns:
+    for col in summary_df.select_dtypes(include="number").columns:
         values = summary_df[col]
         mean = values.mean()
         print(f"  {col:<22s}  {mean:.4f}  (per query: {', '.join(f'{v:.4f}' for v in values)})")
