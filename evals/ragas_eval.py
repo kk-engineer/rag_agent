@@ -1,5 +1,4 @@
 import logging
-import os
 from ragas import evaluate
 from ragas.metrics import (
     faithfulness,
@@ -8,8 +7,8 @@ from ragas.metrics import (
     context_precision,
 )
 from datasets import Dataset
+from config.embedding_provider import EmbeddingProvider
 from config.llm_provider import LLMProvider
-from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
 from utils import timer
 
 logger = logging.getLogger(__name__)
@@ -18,13 +17,10 @@ logger = logging.getLogger(__name__)
 class RagasEvaluator:
     def __init__(self):
         logger.info("Initializing RAGAS evaluator")
-        self.eval_llm = LLMProvider.get_nvidia_llm(model_name="meta/llama-3.3-70b-instruct")
-        self.eval_embeddings = NVIDIAEmbeddings(
-            model="nvidia/nv-embedqa-e5-v5",
-            nvidia_api_key=os.environ.get("nvidia_api_key")
-        )
+        self.eval_llm = LLMProvider.get_llm()
+        self.eval_embeddings = EmbeddingProvider.get_embedding()
         self.metrics = [
-            faithfulness,
+            #faithfulness,
             answer_relevancy,
             context_recall,
             context_precision,

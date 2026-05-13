@@ -21,7 +21,7 @@ class RAGPipeline:
         logger.info("RAG Pipeline Initialization")
         logger.info("=" * 50)
 
-        self.llm = LLMProvider.get_nvidia_llm(model_name="meta/llama-3.3-70b-instruct")
+        self.llm = LLMProvider.get_llm()
         os.environ["LANGCHAIN_TRACING_V2"] = "true"
         os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
         os.environ["LANGCHAIN_API_KEY"] = os.environ.get("langchain_api_key")

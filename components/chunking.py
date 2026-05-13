@@ -1,8 +1,7 @@
 import logging
-import os
 from langchain_experimental.text_splitter import SemanticChunker
-from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from config.embedding_provider import EmbeddingProvider
 from utils import timer
 
 logger = logging.getLogger(__name__)
@@ -10,11 +9,8 @@ logger = logging.getLogger(__name__)
 
 class SemanticProcessor:
     def __init__(self):
-        logger.info("Initializing NVIDIA embeddings for semantic chunking")
-        self.embeddings = NVIDIAEmbeddings(
-            model="nvidia/nv-embedqa-e5-v5",
-            nvidia_api_key=os.environ.get("nvidia_api_key")
-        )
+        logger.info("Initializing embeddings for semantic chunking")
+        self.embeddings = EmbeddingProvider.get_embedding()
         self.safety_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1500,
             chunk_overlap=150
