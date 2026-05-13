@@ -1,6 +1,6 @@
 # RAG Agent
 
-A modular Retrieval-Augmented Generation (RAG) pipeline that combines semantic search, keyword retrieval, reranking, and LLM-based generation with guardrails and evaluation. Supports both cloud NVIDIA AI endpoints and local LLMs via Ollama.
+A modular Retrieval-Augmented Generation (RAG) pipeline that combines semantic search, keyword retrieval, reranking, and LLM-based generation with guardrails and evaluation. Supports both cloud NVIDIA AI endpoints and local LLMs via llama.cpp.
 
 ## Architecture
 
@@ -48,7 +48,7 @@ PDF Document
 | **Indexing** | `components/indexing.py` | Dual index: Chroma vector store (dense) + BM25 retriever (sparse) |
 | **Retrieval** | `components/retrieval.py` | Hybrid ensemble: Multi-Query dense retriever (0.7 weight) + BM25 (0.3 weight) |
 | **Post-Processing** | `components/post_processing.py` | FlashRank reranking via `ContextualCompressionRetriever` |
-| **Generation** | `components/generation.py` | Prompt-based answer generation with `[Source, Page]` citations; traced via LangSmith `@traceable` |
+| **Generation** | `components/generation.py` | Prompt-based answer generation with `[Source, Page]` citations; traced via OpenSmith `@trace` |
 | **Guardrails** | `components/guardrails.py` | Validates output: rejects AI identity phrases, ensures citation presence |
 | **Evaluation** | `evals/ragas_eval.py` | RAGAS metrics: faithfulness, answer_relevancy, context_recall, context_precision |
 
@@ -64,34 +64,63 @@ PDF Document
 ### 1. Prerequisites
 
 - Python ≥ 3.11
-- [Ollama](https://ollama.com/download/) (for local mode)
-- NVIDIA API key (for cloud mode)
+- [uv](https://docs.astral.sh/uv/) (Python package manager)
+- [llama.cpp](https://github.com/ggml-org/llama.cpp) built from source (for local inference)
+- NVIDIA API key (for cloud mode, optional)
 
-### 2. Install
+### 2. Setup Virtual Environment & Install Dependencies
 
 ```bash
 git clone https://github.com/kk-engineer/rag_agents.git
 cd rag_agents
 
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uv venv
+source .venv/bin/activate
 
-uv sync  # or: pip install -r requirements.txt
+uv sync
 ```
 
-### 3. Environment Variables
+### 3. Start Local Servers
+
+Start the **LLM server** (mistral-nemo-12b):
+
+```bash
+./build/bin/llama-server \
+  -m models/mistral-nemo-12b.gguf \
+  --n-gpu-layers -1 \
+  --port 8000 \
+  -np 4 \
+  -c 8192
+```
+
+Start the **embedding server** (nomic-embed):
+
+```bash
+./build/bin/llama-server \
+  -m models/nomic-embed-text-v1.5.Q8_0.gguf \
+  --embedding \
+  -ngl 999 \
+  --port 8001 \
+  -np 8 \
+  -c 8192
+```
+
+### 4. Environment Variables
 
 ```bash
 export nvidia_api_key="nvapi-..."       # Required for NVIDIA AI endpoints
 export langchain_api_key="lsv2_pt_..."  # Optional, for LangSmith tracing
 ```
 
-### 4. Run
+### 5. (Optional) Start OpenSmith Trace Viewer
 
-**Streamlit UI:**
 ```bash
-streamlit run app.py
+opensmith ui
 ```
+
+Traces are available at [http://127.0.0.1:7824](http://127.0.0.1:7824)
+
+### 6. Run
 
 **Python pipeline (CLI):**
 ```bash

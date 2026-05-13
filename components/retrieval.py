@@ -1,7 +1,9 @@
 import logging
-from langchain.retrievers.multi_query import MultiQueryRetriever
+
 from langchain.retrievers.ensemble import EnsembleRetriever
+from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain_core.prompts import PromptTemplate
+
 from utils import timer
 
 logger = logging.getLogger(__name__)
@@ -20,20 +22,34 @@ class HybridRetriever:
             Original question: {question}""",
         )
 
-        logger.info("Setting up multi-query retriever (k=5)")
-        self.mq_retriever = MultiQueryRetriever.from_llm(
-            retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
-            llm=self.llm,
-            prompt=QUERY_PROMPT
-        )
+        logger.info("Setting up multi-query retriever (k=3)")
+        try:
+            self.mq_retriever = MultiQueryRetriever.from_llm(
+                retriever=vectorstore.as_retriever(search_kwargs={"k": 3}),
+                llm=self.llm,
+                prompt=QUERY_PROMPT,
+            )
+        except Exception as e:
+            logger.error("MultiQuery retriever setup failed: %s", e)
+            raise
 
         logger.info("Creating ensemble retriever (dense=0.7, sparse=0.3)")
-        self.ensemble = EnsembleRetriever(
-            retrievers=[self.mq_retriever, bm25_retriever],
-            weights=[0.7, 0.3]
-        )
+        try:
+            self.ensemble = EnsembleRetriever(
+                retrievers=[self.mq_retriever, bm25_retriever],
+                weights=[0.7, 0.3],
+            )
+        except Exception as e:
+            logger.error("Ensemble retriever setup failed: %s", e)
+            raise
 
-    @timer
-    def retrieve(self, query: str):
+    @timer(name="Hybrid retrieval")
+    def retrieve(self, query: str) -> list:
         logger.info("Retrieving documents for: %s", query[:80])
-        return self.ensemble.invoke(query)
+        try:
+            docs = self.ensemble.invoke(query)
+            logger.info("Retrieved %d documents", len(docs))
+            return docs
+        except Exception as e:
+            logger.error("Retrieval failed for query '%s': %s", query[:50], e)
+            raise
